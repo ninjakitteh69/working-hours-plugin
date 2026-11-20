@@ -1,6 +1,7 @@
 # Working Hours Jenkins Plugin
 
 [![Release](https://img.shields.io/github/v/release/ninjakitteh69/working-hours-plugin?sort=semver)](https://github.com/ninjakitteh69/working-hours-plugin/releases)
+[![Issues](https://img.shields.io/github/issues/ninjakitteh69/working-hours-plugin)](https://github.com/ninjakitteh69/working-hours-plugin/issues)
 
 The working hours plugin allows you to set up a schedule of allowable build times;
 projects can opt in to use the schedule to prevent them from running outside of
@@ -86,6 +87,18 @@ structs                     362.va_b_695ef4fdf9
 - 1.x required Jenkins 2.150.1 and Java 8; this release requires **2.580.1 and Java 21**
 - Existing global configuration, excluded dates and job properties are preserved
 - The plugin is installed with the same artifact ID, so it replaces 1.x in place
+
+## Reporting issues
+
+Report bugs and feature requests here:
+
+**https://github.com/ninjakitteh69/working-hours-plugin/issues/new**
+
+This is a fork built and distributed separately from the upstream plugin, so
+issues about *this* build belong in this repository rather than in
+[jenkinsci/working-hours-plugin](https://github.com/jenkinsci/working-hours-plugin/issues).
+Include your Jenkins version, Java version and the plugin version shown under
+`Manage Jenkins` → `Plugins` → `Installed plugins`.
 
 ## Development
 
