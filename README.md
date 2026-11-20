@@ -1,12 +1,14 @@
 # Working Hours Jenkins Plugin
 
-[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/working-hours.svg)](https://plugins.jenkins.io/working-hours)
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/working-hours.svg?color=blue)](https://plugins.jenkins.io/working-hours)
+[![Release](https://img.shields.io/github/v/release/ninjakitteh69/working-hours-plugin?sort=semver)](https://github.com/ninjakitteh69/working-hours-plugin/releases)
 
 The working hours plugin allows you to set up a schedule of allowable build times;
 projects can opt in to use the schedule to prevent them from running outside of
 configured allowable build times. If a build is scheduled during non-working hours
 then it is kept in the build queue until the next allowable time.
+
+This build is distributed as a GitHub release asset and is **not** published to the
+Jenkins update center — see [Installation](#installation).
 
 Jobs opt in via the `enforceBuildSchedule` job parameter, which is provided by this
 plugin. It can optionally take in a `branches` parameter to limit it's usage to only those branches.
@@ -20,6 +22,70 @@ This only works in MultiBranchPipelines.
 Earlier releases of this plugin (1.1 and older) built against Jenkins 2.150.1 and Java 8.
 The minimum versions were raised to follow Jenkins' [Java support policy](https://www.jenkins.io/doc/book/platform-information/support-policy-java/):
 Java 17 reached end of support with Jenkins 2.544, so Java 21 is now the minimum.
+
+## Installation
+
+Download the plugin:
+
+**https://github.com/ninjakitteh69/working-hours-plugin/releases/latest/download/working-hours.hpi**
+
+That URL always serves the newest release. To pin a specific version, replace
+`latest/download` with `download/2.0.0` (see
+[all releases](https://github.com/ninjakitteh69/working-hours-plugin/releases)).
+
+Because this build does not come from the update center, it is installed with one
+of the methods below rather than from `Manage Jenkins` → `Plugins` → `Available`.
+Installing requires `Overall/Administer`.
+
+### From the Jenkins UI
+
+1. `Manage Jenkins` → `Plugins` → `Advanced settings`
+2. Under **Deploy Plugin**, either choose the downloaded `working-hours.hpi`, or
+   paste the download URL above
+3. Click **Deploy**, then restart Jenkins when prompted
+4. Confirm the version under `Plugins` → `Installed plugins`
+
+When installing from the UI, Jenkins resolves the plugin's dependencies from the
+update center automatically.
+
+### From the CLI
+
+```bash
+java -jar jenkins-cli.jar -s https://jenkins.example.com/ -auth myuser:MY_API_TOKEN \
+  install-plugin https://github.com/ninjakitteh69/working-hours-plugin/releases/latest/download/working-hours.hpi \
+  -deploy
+```
+
+### From the filesystem
+
+```bash
+sudo systemctl stop jenkins
+sudo curl -fL -o /var/lib/jenkins/plugins/working-hours.jpi \
+  https://github.com/ninjakitteh69/working-hours-plugin/releases/latest/download/working-hours.hpi
+sudo chown jenkins:jenkins /var/lib/jenkins/plugins/working-hours.jpi
+sudo systemctl start jenkins
+```
+
+Remove any existing `plugins/working-hours.jpi` and exploded
+`plugins/working-hours/` directory first. This method does **not** install
+dependencies — make sure these are at least the versions below:
+
+```
+workflow-api                1429.v7a_1b_efb_a_f7c5
+workflow-durable-task-step  1479.v56e587f413a_7
+workflow-job                1624.ve973eb_34e031
+workflow-multibranch        842.v3a_b_59b_57b_e6e
+workflow-step-api           724.v538c2362b_dfb_
+workflow-support            1028.vc22910142650
+script-security             1436.v1082791135e4
+structs                     362.va_b_695ef4fdf9
+```
+
+### Upgrading from 1.x
+
+- 1.x required Jenkins 2.150.1 and Java 8; this release requires **2.580.1 and Java 21**
+- Existing global configuration, excluded dates and job properties are preserved
+- The plugin is installed with the same artifact ID, so it replaces 1.x in place
 
 ## Development
 
@@ -66,6 +132,20 @@ matches it, runs `./mvnw -B -ntp clean verify` on Temurin 21, and uploads
 
 Note that the commit only selects *which commit* is built; the version reported by
 the built plugin still comes from `pom.xml`.
+
+### Publishing a release
+
+Tag builds upload the HPI as a workflow artifact. To turn one into an installable
+link, attach that HPI to a GitHub Release for the tag:
+
+```bash
+gh release create 2.0.0 working-hours.hpi#working-hours.hpi --verify-tag \
+  --title "2.0.0" --notes "Release notes"
+```
+
+That publishes
+`https://github.com/ninjakitteh69/working-hours-plugin/releases/download/2.0.0/working-hours.hpi`,
+which can be pasted straight into the Jenkins **Deploy Plugin** form.
 
 ## Usage
 
