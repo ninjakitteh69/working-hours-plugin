@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.CheckForNull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import jenkins.model.GlobalConfiguration;
 
 /**
@@ -38,7 +38,7 @@ import jenkins.model.GlobalConfiguration;
  *
  * @author jeffpearce
  */
-@Extension(optional = true)
+@Extension
 public class WorkingHoursConfig extends GlobalConfiguration {
 
     /**

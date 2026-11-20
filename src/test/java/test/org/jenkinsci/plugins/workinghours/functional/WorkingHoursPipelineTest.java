@@ -40,19 +40,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Rule;
-import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  *
  * @author jeffpearce
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({WorkflowJob.class, WorkflowRun.class})
-@PowerMockIgnore({"javax.crypto.*"})
 public class WorkingHoursPipelineTest {
 
     @Rule

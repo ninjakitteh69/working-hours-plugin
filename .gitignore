@@ -1,8 +1,29 @@
+# Maven build output
+target/
+work/
+
+# Maven wrapper
+# NOTE: mvnw, mvnw.cmd and .mvn/wrapper/maven-wrapper.properties are intentionally
+# committed so the build always runs on a known Maven version.
+.mvn/timing.properties
+.flattened-pom.xml
+
+# Eclipse
 .classpath
 .project
 .settings/
-target/
-work/
-.idea
+.factorypath
+bin/
+
+# IntelliJ IDEA
+.idea/
 *.iml
+
+# NetBeans
 /nbproject/
+
+# Visual Studio Code
+.vscode/
+
+# OS files
+.DS_Store

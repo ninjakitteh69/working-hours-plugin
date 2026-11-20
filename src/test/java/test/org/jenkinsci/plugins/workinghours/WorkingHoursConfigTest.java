@@ -25,30 +25,23 @@ package test.org.jenkinsci.plugins.workinghours;
 
 import org.jenkinsci.plugins.workinghours.model.TimeRange;
 import org.jenkinsci.plugins.workinghours.model.ExcludedDate;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
-import jenkins.model.GlobalConfiguration;
 import org.jenkinsci.plugins.workinghours.WorkingHoursConfig;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import static org.powermock.api.support.membermodification.MemberMatcher.method;
-import static org.powermock.api.support.membermodification.MemberModifier.suppress;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.jvnet.hudson.test.JenkinsRule;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({GlobalConfiguration.class})
-@PowerMockIgnore({"javax.crypto.*"})
 public class WorkingHoursConfigTest {
+
+    @Rule
+    public JenkinsRule jenkins = new JenkinsRule();
 
     public WorkingHoursConfigTest() {
     }
@@ -62,10 +55,7 @@ public class WorkingHoursConfigTest {
     }
 
     @Before
-    public void setUp() throws IOException {
-        suppress(method(WorkingHoursConfig.class, "load"));
-        suppress(method(WorkingHoursConfig.class, "save"));
-        PowerMockito.mockStatic(GlobalConfiguration.class);        
+    public void setUp() {
     }
 
     @After

@@ -39,7 +39,6 @@ import org.jenkinsci.plugins.workinghours.EnforceScheduleJobProperty;
 import org.jenkinsci.plugins.workinghours.WorkingHoursConfig;
 import org.jenkinsci.plugins.workinghours.WorkingHoursQueueTaskDispatcher;
 import org.jenkinsci.plugins.workinghours.actions.EnforceBuildScheduleAction;
-import org.mockito.exceptions.misusing.WrongTypeOfReturnValue;
 import test.org.jenkinsci.plugins.workinghours.utility.TimeRangeUtility;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -50,22 +49,14 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import org.junit.Rule;
-import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
 
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({WorkflowJob.class, WorkflowRun.class})
-@PowerMockIgnore({"javax.crypto.*"})
 public class WorkingHoursQueueTaskDispatcherTest {
 
     @Rule
@@ -296,7 +287,7 @@ public class WorkingHoursQueueTaskDispatcherTest {
      * Verifies that canRun blocks tasks when current branch matches a branch provided and is a MultibranchPipeline
      *
     @Test
-    public void testCanRunBlockedMatchingBranches() throws WrongTypeOfReturnValue {
+    public void testCanRunBlockedMatchingBranches() {
         WorkingHoursConfig config = WorkingHoursConfig.get();
         config.setBuildTimeMatrix(TimeRangeUtility.getExclusiveRange());
         config.save();

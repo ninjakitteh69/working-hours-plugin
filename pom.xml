@@ -4,15 +4,18 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.6</version>
+        <version>6.2250.va_d01d559a_209</version>
         <relativePath />
     </parent>
     <artifactId>working-hours</artifactId>
     <version>1.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <properties>
-        <jenkins.version>2.150.1</jenkins.version>
-        <java.level>8</java.level>
+        <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+        <jenkins.baseline>2.580</jenkins.baseline>
+        <jenkins.version>${jenkins.baseline}.1</jenkins.version>
+        <!-- The Java release level is derived from jenkins.baseline by the hpi plugin
+        (2.580 requires Java 21, because Java 17 support ended with 2.544). -->
     </properties>
     <name>Working Hours Plugin</name>
     <description>Queues builds that ran after certain working hours</description>
@@ -23,119 +26,91 @@
             <url>http://opensource.org/licenses/MIT</url>
         </license>
     </licenses>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-${jenkins.baseline}.x</artifactId>
+                <version>7349.vd0a_cb_6c87a_31</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>script-security</artifactId>
-            <version>1.39</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>structs</artifactId>
-            <version>1.17</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>2.16</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-job</artifactId>
-            <version>2.31</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-api</artifactId>
-            <version>2.32</version>
         </dependency>
-        <!-- he plugin doesn't explicitly use workflow-multibranch, but making
+        <!-- The plugin doesn't explicitly use workflow-multibranch, but making
         sure we have a newer version installed lets scripted pipeline use
         job parameters without generating a warning-->
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-multibranch</artifactId>
-            <version>2.16</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-support</artifactId>
-            <version>2.21</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-durable-task-step</artifactId>
-            <version>2.9</version>
         </dependency>
 
         <!-- Test dependencies -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.8.47</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito2</artifactId>
-            <version>1.7.4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <version>1.7.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-core</artifactId>
-            <version>1.7.4</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-reflect</artifactId>
-            <version>1.7.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>2.1.19</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>scm-api</artifactId>
-            <version>2.2.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-aggregator</artifactId>
-            <version>2.5</version>
+            <artifactId>workflow-cps</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-basic-steps</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-scm-step</artifactId>
-            <version>2.5</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-        </plugins>
-    </build>
-
     <developers>
         <developer>
             <id>jeffpearce</id>
@@ -145,7 +120,7 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+        <connection>scm:git:https://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
       <tag>HEAD</tag>

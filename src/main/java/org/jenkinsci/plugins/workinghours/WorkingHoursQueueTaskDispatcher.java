@@ -52,7 +52,7 @@ import org.jenkinsci.plugins.workflow.support.steps.ExecutorStepExecution;
  * 
  * @author jeffpearce
  */
-@Extension(optional = true)
+@Extension
 public class WorkingHoursQueueTaskDispatcher extends QueueTaskDispatcher {
 
     /**

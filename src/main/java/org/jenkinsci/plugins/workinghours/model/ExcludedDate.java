@@ -132,6 +132,9 @@ public class ExcludedDate extends AbstractDescribableImpl<ExcludedDate> {
 
     public Boolean shouldExclude(Calendar date) {
         LocalDate localDate = DateTimeUtility.localDate(getDate());
+        if (localDate == null) {
+            return false;
+        }
 
         LocalDate checkTime = LocalDate.of(
                 date.get(Calendar.YEAR),

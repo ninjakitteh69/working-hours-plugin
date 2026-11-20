@@ -1,7 +1,8 @@
 # Working Hours Jenkins Plugin
 
-[![Join the chat at https://gitter.im/jenkinsci/working-hours-plugin](https://badges.gitter.im/jenkinsci/working-hours-plugin.svg)](https://gitter.im/jenkinsci/working-hours-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/working-hours.svg)](https://plugins.jenkins.io/working-hours)
+[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/working-hours.svg?color=blue)](https://plugins.jenkins.io/working-hours)
+[![Build Status](https://ci.jenkins.io/job/Plugins/job/working-hours-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/working-hours-plugin/job/master/)
 
 The working hours plugin allows you to set up a schedule of allowable build times;
 projects can opt in to use the schedule to prevent them from running outside of
@@ -11,6 +12,46 @@ then it is kept in the build queue until the next allowable time.
 Jobs opt in via the `enforceBuildSchedule` job parameter, which is provided by this
 plugin. It can optionally take in a `branches` parameter to limit it's usage to only those branches.
 This only works in MultiBranchPipelines.
+
+## Requirements
+
+* Jenkins **2.580.1** or newer
+* Java **21** or newer, on the controller and on agents
+
+Earlier releases of this plugin (1.1 and older) built against Jenkins 2.150.1 and Java 8.
+The minimum versions were raised to follow Jenkins' [Java support policy](https://www.jenkins.io/doc/book/platform-information/support-policy-java/):
+Java 17 reached end of support with Jenkins 2.544, so Java 21 is now the minimum.
+
+## Development
+
+### Building
+
+The build uses the [Maven Wrapper](https://maven.apache.org/wrapper/), so Maven does not need to be installed:
+
+```bash
+./mvnw clean verify
+```
+
+This compiles the plugin, runs the unit and Jenkins test harness (`JenkinsRule`) functional tests,
+runs SpotBugs, and produces `target/working-hours.hpi`.
+
+To build with your own Maven instead of the wrapper, use Maven **3.9.6 or newer** on **JDK 21**.
+Note that Maven 3.9.12 currently fails to load the Jenkins `hpi` packaging extension
+(`Unknown packaging: hpi`), so use 3.9.9 - 3.9.11, or just use `./mvnw`.
+
+### Running a local Jenkins
+
+```bash
+./mvnw hpi:run
+```
+
+Then browse to <http://localhost:8080/jenkins/>. Both `target/` and the `work/` home directory are ignored by git.
+
+### Skipping tests
+
+```bash
+./mvnw -DskipTests clean package
+```
 
 ## Usage
 
@@ -45,7 +86,7 @@ pipeline {
 Sample job with branches parameter (works in both declarative and scripted):
 ```
 node {
-  properties([enforceBuildSchedule(branches: ['dev', 'qa', 'prod')])
+  properties([enforceBuildSchedule(branches: ['dev', 'qa', 'prod'])])
   stage('Do some stuff') {
     echo 'this can wait til morning'
   }

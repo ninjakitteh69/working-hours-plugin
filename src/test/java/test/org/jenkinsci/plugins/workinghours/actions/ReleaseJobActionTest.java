@@ -36,21 +36,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.*;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  *
  * @author jeffpearce
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({WorkflowJob.class, WorkflowRun.class})
-@PowerMockIgnore({"javax.crypto.*"})
 public class ReleaseJobActionTest {
 
     private WorkflowJob mockWorkflowJob;
@@ -69,8 +61,8 @@ public class ReleaseJobActionTest {
 
     @Before
     public void setUp() {
-        mockWorkflowJob = PowerMockito.mock(WorkflowJob.class);
-        mockWorkflowRun = PowerMockito.mock(WorkflowRun.class);
+        mockWorkflowJob = Mockito.mock(WorkflowJob.class);
+        mockWorkflowRun = Mockito.mock(WorkflowRun.class);
         when(mockWorkflowRun.getParent()).thenReturn(mockWorkflowJob);
     }
 
@@ -123,7 +115,7 @@ public class ReleaseJobActionTest {
     @Test
     public void testDoReleaseNotNull() {
         ReleaseJobAction instance = new ReleaseJobAction(mockWorkflowRun);
-        EnforceBuildScheduleAction action = PowerMockito.mock(EnforceBuildScheduleAction.class);
+        EnforceBuildScheduleAction action = Mockito.mock(EnforceBuildScheduleAction.class);
         when(mockWorkflowRun.getAction(any())).thenReturn(action);
         instance.doRelease();
         Mockito.verify(action).releaseJob();
@@ -155,8 +147,8 @@ public class ReleaseJobActionTest {
     public void testFactoryCreateForBuiding() {
         ReleaseJobAction.Factory instance = new ReleaseJobAction.Factory();
 
-        EnforceBuildScheduleAction action = PowerMockito.mock(EnforceBuildScheduleAction.class);
-        EnforceScheduleJobProperty property = PowerMockito.mock(EnforceScheduleJobProperty.class);
+        EnforceBuildScheduleAction action = Mockito.mock(EnforceBuildScheduleAction.class);
+        EnforceScheduleJobProperty property = Mockito.mock(EnforceScheduleJobProperty.class);
 
         when(mockWorkflowJob.getAction(any())).thenReturn(action);
         when(mockWorkflowJob.getProperty(EnforceScheduleJobProperty.class)).thenReturn(property);
@@ -176,8 +168,8 @@ public class ReleaseJobActionTest {
     public void testFactoryCreateNotBuilding() {
         ReleaseJobAction.Factory instance = new ReleaseJobAction.Factory();
 
-        EnforceBuildScheduleAction action = PowerMockito.mock(EnforceBuildScheduleAction.class);
-        EnforceScheduleJobProperty property = PowerMockito.mock(EnforceScheduleJobProperty.class);
+        EnforceBuildScheduleAction action = Mockito.mock(EnforceBuildScheduleAction.class);
+        EnforceScheduleJobProperty property = Mockito.mock(EnforceScheduleJobProperty.class);
 
         when(mockWorkflowJob.getAction(any())).thenReturn(action);
         when(mockWorkflowJob.getProperty(EnforceScheduleJobProperty.class)).thenReturn(property);
@@ -197,7 +189,7 @@ public class ReleaseJobActionTest {
     public void testFactoryCreateNotEnforcing() {
         ReleaseJobAction.Factory instance = new ReleaseJobAction.Factory();
 
-        EnforceBuildScheduleAction action = PowerMockito.mock(EnforceBuildScheduleAction.class);
+        EnforceBuildScheduleAction action = Mockito.mock(EnforceBuildScheduleAction.class);
 
         when(mockWorkflowJob.getAction(any())).thenReturn(action);
         when(mockWorkflowJob.getProperty(EnforceScheduleJobProperty.class)).thenReturn(null);
