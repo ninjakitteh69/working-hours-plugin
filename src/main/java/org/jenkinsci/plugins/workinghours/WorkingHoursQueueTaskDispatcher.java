@@ -29,15 +29,22 @@ import org.jenkinsci.plugins.workinghours.model.ExcludedDate;
 import org.jenkinsci.plugins.workinghours.model.TimeRange;
 import hudson.Extension;
 import hudson.model.Actionable;
+import hudson.model.Cause;
 import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.Queue.Task;
 import hudson.model.Run;
+import hudson.model.User;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.model.queue.QueueTaskDispatcher;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.model.Jenkins;
+import jenkins.util.Timer;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStepExecution;
 
@@ -79,6 +86,18 @@ public class WorkingHoursQueueTaskDispatcher extends QueueTaskDispatcher {
         if (ownerTask instanceof WorkflowJob) {
             WorkflowJob workflowJob = (WorkflowJob) ownerTask;
             Run workflowRun = ((ExecutorStepExecution.PlaceholderTask)item.task).run();
+
+            // User-level working hours take precedence when the triggering user
+            // holds the permission and has configured their own times.
+            List<TimeRange> userTimes = getUserTimeRanges(item);
+            if (userTimes != null) {
+                if (!canRunNow(workflowRun, item, userTimes)) {
+                    log(Level.INFO, "Blocking item %d (user working hours)", item.getId());
+                    return blockOrAbort(item);
+                }
+                return super.canRun(item);
+            }
+
             EnforceScheduleJobProperty prop = workflowJob.getProperty(EnforceScheduleJobProperty.class);
             if (prop != null) {
                 if (prop.getBranches() == null || prop.getBranches().size() == 0
@@ -86,17 +105,105 @@ public class WorkingHoursQueueTaskDispatcher extends QueueTaskDispatcher {
                         || prop.getBranches().contains(workflowJob.getDisplayName())) {
                     if (!canRunNow(workflowRun, item)) {
                         log(Level.INFO, "Blocking item %d", item.getId());
-                        return new CauseOfBlockage() {
-                            @Override
-                            public String getShortDescription() {
-                                return WorkingHoursConfig.get().getJobHoldText();
-                            }
-                        };
+                        return blockOrAbort(item);
                     }
                 }
             }
         }
         return super.canRun(item);
+    }
+
+    /**
+     * Resolves the working hours that apply to the user who triggered the
+     * given queue item.
+     *
+     * @param item the queue item being considered.
+     * @return the triggering user's configured times, or null if user level
+     *         enforcement does not apply (no user, missing permission, or no
+     *         times configured).
+     */
+    private List<TimeRange> getUserTimeRanges(Queue.Item item) {
+        User user = getTriggeringUser(item);
+        if (user == null) {
+            return null;
+        }
+        if (!user.hasPermission(WorkingHoursPermissions.ENFORCE_USER_SCHEDULE)) {
+            return null;
+        }
+        WorkingHoursUserProperty property = user.getProperty(WorkingHoursUserProperty.class);
+        if (property == null || property.getBuildTimeMatrix().isEmpty()) {
+            return null;
+        }
+        return property.getBuildTimeMatrix();
+    }
+
+    /**
+     * Determines which user caused the queue item to be created.
+     *
+     * @param item the queue item being considered.
+     * @return the triggering user, or null if the item was not triggered by a
+     *         user (for example a timer or an upstream job).
+     */
+    private User getTriggeringUser(Queue.Item item) {
+        for (Cause cause : item.getCauses()) {
+            if (cause instanceof Cause.UserIdCause) {
+                String id = ((Cause.UserIdCause) cause).getUserId();
+                if (id == null) {
+                    continue;
+                }
+                User user = User.getById(id, false);
+                if (user != null) {
+                    return user;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Builds the blockage for an item which is not allowed to run right now,
+     * cancelling it instead when the configuration asks for that.
+     *
+     * @param item the queue item being blocked.
+     * @return the blockage to report to the queue.
+     */
+    private CauseOfBlockage blockOrAbort(final Queue.Item item) {
+        final WorkingHoursConfig config = WorkingHoursConfig.get();
+        if (config != null && config.isAbortOutsideHours()) {
+            abort(item);
+            return new CauseOfBlockage() {
+                @Override
+                public String getShortDescription() {
+                    return Messages.WorkingHoursQueueTaskDispatcher_Aborted();
+                }
+            };
+        }
+        return new CauseOfBlockage() {
+            @Override
+            public String getShortDescription() {
+                return config == null ? "" : config.getJobHoldText();
+            }
+        };
+    }
+
+    /**
+     * Cancels a queue item, deferred so that the queue is not modified while it
+     * is iterating over its dispatchers.
+     *
+     * @param item the queue item to cancel.
+     */
+    private void abort(final Queue.Item item) {
+        log(Level.WARNING, "Cancelling queue item %d: scheduled outside working hours", item.getId());
+        Timer.get().schedule(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Jenkins.get().getQueue().cancel(item);
+                } catch (RuntimeException ex) {
+                    log(Level.WARNING, "Unable to cancel queue item %d: %s", item.getId(), ex.getMessage());
+                }
+            }
+        }, 0, TimeUnit.SECONDS);
     }
 
     /**
@@ -126,6 +233,24 @@ public class WorkingHoursQueueTaskDispatcher extends QueueTaskDispatcher {
      */
     public boolean canRunNow(Actionable itemActionable,
             Queue.Item item) {
+        WorkingHoursConfig config = WorkingHoursConfig.get();
+        List<TimeRange> allowableTimes = config == null
+                ? Collections.<TimeRange>emptyList()
+                : config.getBuildTimeMatrix();
+        return canRunNow(itemActionable, item, allowableTimes);
+    }
+
+    /**
+     * Determines whether a queue item can run at the current moment against a
+     * specific set of allowable times.
+     * @param itemActionable The item being checked.
+     * @param item The queue item to check.
+     * @param allowableTimes The time ranges to check against.
+     * @return true if the item can run now; false otherwise.
+     */
+    public boolean canRunNow(Actionable itemActionable,
+            Queue.Item item,
+            List<TimeRange> allowableTimes) {
 
         if (itemActionable == null || item == null) {
             return true;
@@ -137,13 +262,15 @@ public class WorkingHoursQueueTaskDispatcher extends QueueTaskDispatcher {
         WorkingHoursConfig config = WorkingHoursConfig.get();
 
         // Check whether today should be excluded according to the excluded dates we set.
-        for (ExcludedDate excludedDate : config.getExcludedDates()) {
-            if(excludedDate.shouldExclude(now)){
-                return false;
+        if (config != null) {
+            for (ExcludedDate excludedDate : config.getExcludedDates()) {
+                if (excludedDate.shouldExclude(now)) {
+                    return false;
+                }
             }
         }
 
-        for (TimeRange allowableTime : config.getBuildTimeMatrix()) {
+        for (TimeRange allowableTime : allowableTimes) {
             if (allowableTime.includesTime(now)) {
                 if (action != null) {
                     // Mark the action as released for book-keeping

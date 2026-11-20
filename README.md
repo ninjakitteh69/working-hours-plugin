@@ -93,6 +93,9 @@ node {
 }
 ```
 
+Alternatively, working hours can be enforced per user rather than per job — see
+[Per-user working hours](#per-user-working-hours).
+
 When the job runs outside of configured hours, you'll be able to see a tooltip from the job in the queue:
 
 ![Queued job](images/queued-job.png "Tooltip for blocked job")
@@ -112,12 +115,66 @@ and the build page:
 
 ![Release job action](images/release-build-action-2.png "Release job actions")
 
+## Per-user working hours
+
+Instead of opting individual jobs in, working hours can be enforced per **user**
+and granted to a **group** through Jenkins permissions. This is useful when a
+team may only deploy during their own hours, regardless of which job they run.
+
+Two permissions are contributed, implied by `Overall/Administer` and assignable
+to any group with matrix authorization, role strategy or your security realm's
+group mapping:
+
+| Permission | Effect |
+|---|---|
+| `Working Hours/ManageUserSchedule` | Shows the Working Hours section on the user's own configuration page, so they can set their own times. |
+| `Working Hours/EnforceUserSchedule` | Builds triggered by the user are restricted to that user's own times instead of the job-level schedule. |
+
+To set it up:
+
+1. Grant both permissions to the group (for example `deployers`) in
+   `Manage Jenkins` → `Security` (any authorization strategy, for example
+   matrix authorization or role strategy).
+2. Each member configures their times at `Manage Jenkins` → `Users` → their user
+   → `Configure`, in the **Working Hours** section.
+3. Leave the job without the `enforceBuildSchedule` property, or keep it — the
+   user's schedule takes precedence when the triggering user holds the
+   permission and has configured at least one time range.
+
+Behaviour notes:
+
+- Times are local to the controller.
+- Global *excluded dates* still apply to user schedules.
+- If a user has the permission but configured no times, the job-level behaviour
+  applies (opt-in via `enforceBuildSchedule`).
+- Builds started by a timer, a poll, or an upstream job carry no user identity,
+  so they are handled by the job-level rules only. Pair this with the option
+  below if timer-driven deployments must never run outside hours.
+
+## Failing instead of queueing
+
+By default, builds queued outside working hours are **held** until the next
+allowable time. Enable `Cancel builds scheduled outside working hours` in
+`Manage Jenkins` → `System` → Working Hours to change that.
+
+When enabled, such builds are cancelled before they start rather than deferred.
+This is the option to use when a deployment must never run outside working
+hours: a timer-triggered deployment at 02:00 is cancelled instead of quietly
+running at 08:00.
+
+Because a cancelled queue item never starts, it does not appear as a failed
+build in the build history; the cancellation is recorded in the queue and in the
+Jenkins log.
 
 ## Configuration
 
 In order to use the working hours plugin, you must set up a schedule in your Jenkins
 system configuration page. You can configure both daily working hours and specific dates (such
   as holidays). The following configuration will cause jobs with  `enforceBuildSchedule` to queue if ran outside of Monday - Friday 8:00 AM to 6:00 PM.
+
+This page also holds the `Cancel builds scheduled outside working hours` option, which
+changes the behaviour from queueing to cancelling — see
+[Failing instead of queueing](#failing-instead-of-queueing).
 
   *Note:* all times are local to your Jenkins controller.
 
@@ -131,12 +188,17 @@ This section contains the times when guarded steps are allowed for each day. Tim
 
 **Note** All times are local to your Jenkins controller.
 
-If the `enforceBuildStep` runs at a time that is not between a configured time range
-for the day it's running, the job will be aborted. Please note that if no allowable
-time ranges are configured for a day, `enforceBuildStep` will abort the job.
+A build that is queued at a time which is not inside one of the configured ranges for
+that day is **held** in the queue until the next allowable time. If
+`Cancel builds scheduled outside working hours` is enabled, it is cancelled instead —
+see [Failing instead of queueing](#failing-instead-of-queueing). If no time ranges are
+configured for a day, builds are held for the whole of that day.
 
 ### Excluded dates
-This section contains explicit days (such as holidays) to abort the `enforceBuildStep`. This takes precedence over a`Allowable build times`, so jobs
-will always be queued on an excluded date. Here's an example of some holidays configured in the Working Days calendar:
+This section contains explicit days (such as holidays) on which builds are not allowed
+at all. This takes precedence over `Allowable build times`, so builds are always held
+(or cancelled, when that option is enabled) on an excluded date. Excluded dates apply
+to per-user schedules as well. Here's an example of some holidays configured in the
+Working Days calendar:
 
 ![Excluded days](images/excluded-days.png "Excluded days")

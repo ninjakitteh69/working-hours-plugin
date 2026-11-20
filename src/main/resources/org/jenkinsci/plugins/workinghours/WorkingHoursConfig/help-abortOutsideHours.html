@@ -1,0 +1,19 @@
+<div>
+  When checked, builds that are queued outside of the allowable build times are
+  cancelled immediately instead of being held in the queue until the next
+  allowable time.
+  <p>
+    This is useful when a deployment must never run outside working hours: a
+    build started by a timer (cron) trigger outside of those hours is cancelled
+    rather than being silently deferred to the next morning.
+  </p>
+  <p>
+    Note that a cancelled queue item never starts, so it does not appear as a
+    failed build in the build history; the cancellation is recorded in the
+    Jenkins log and in the queue.
+  </p>
+  <p>
+    When unchecked (the default), builds are held in the queue until the next
+    allowable time.
+  </p>
+</div>

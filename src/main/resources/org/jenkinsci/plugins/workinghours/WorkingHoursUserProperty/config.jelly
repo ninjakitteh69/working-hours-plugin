@@ -1,0 +1,15 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:section title="Working Hours">
+    <j:set var="instance" value="${it}"/>
+    <f:entry title="Allowable build times">
+      <f:repeatableProperty field="buildTimeMatrix"/>
+    </f:entry>
+    <f:entry>
+      <div class="jenkins-form-description">
+        Builds you trigger are restricted to these hours. If no times are configured,
+        the global working hours schedule is used. Times are local to the Jenkins controller.
+      </div>
+    </f:entry>
+  </f:section>
+</j:jelly>

@@ -57,6 +57,12 @@ public class WorkingHoursConfig extends GlobalConfiguration {
     private String customJobHoldText;
 
     /**
+     * Whether builds queued outside working hours should be cancelled instead
+     * of held until the next allowable time.
+     */
+    private boolean abortOutsideHours;
+
+    /**
      * Default times for new configurations.
      */
     private final TimeRange[] defaultConfig = {
@@ -154,6 +160,27 @@ public class WorkingHoursConfig extends GlobalConfiguration {
      */
     public void setCustomJobHoldText(String customJobHoldText) {
         this.customJobHoldText = customJobHoldText.trim().length() > 0 ? customJobHoldText : null;
+        save();
+    }
+
+    /**
+     * Determines whether builds queued outside working hours are cancelled
+     * rather than held until the next allowable time.
+     *
+     * @return true if such builds should be cancelled; false otherwise.
+     */
+    public boolean isAbortOutsideHours() {
+        return abortOutsideHours;
+    }
+
+    /**
+     * Sets whether builds queued outside working hours are cancelled rather
+     * than held until the next allowable time.
+     *
+     * @param abortOutsideHours true to cancel such builds; false to queue them.
+     */
+    public void setAbortOutsideHours(boolean abortOutsideHours) {
+        this.abortOutsideHours = abortOutsideHours;
         save();
     }
 }

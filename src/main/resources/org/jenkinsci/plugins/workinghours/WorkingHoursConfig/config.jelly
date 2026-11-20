@@ -14,5 +14,9 @@
       <f:entry title="Message to show when jobs are held" field="customJobHoldText">
           <f:textbox field="customJobHoldText" />
       </f:entry>
+
+      <f:entry title="Cancel builds scheduled outside working hours" field="abortOutsideHours">
+          <f:checkbox field="abortOutsideHours" />
+      </f:entry>
   </f:section>
 </j:jelly>
