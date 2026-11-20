@@ -2,7 +2,6 @@
 
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/working-hours.svg)](https://plugins.jenkins.io/working-hours)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/working-hours.svg?color=blue)](https://plugins.jenkins.io/working-hours)
-[![Build Status](https://ci.jenkins.io/job/Plugins/job/working-hours-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/working-hours-plugin/job/master/)
 
 The working hours plugin allows you to set up a schedule of allowable build times;
 projects can opt in to use the schedule to prevent them from running outside of
@@ -52,6 +51,21 @@ Then browse to <http://localhost:8080/jenkins/>. Both `target/` and the `work/` 
 ```bash
 ./mvnw -DskipTests clean package
 ```
+
+### Continuous integration
+
+`.github/workflows/build.yml` builds the plugin **on tag pushes only** — branch
+pushes do not start a build. There is also a manual run that takes a commit:
+
+- Push a tag: `git tag v2.0.0 && git push origin v2.0.0` (builds the tagged commit)
+- Or open `Actions` → `Build` → `Run workflow` and enter the **commit SHA** to build.
+
+The workflow checks out the requested commit, verifies the checked out `HEAD`
+matches it, runs `./mvnw -B -ntp clean verify` on Temurin 21, and uploads
+`working-hours.hpi` as an artifact named `working-hours-<short sha>`.
+
+Note that the commit only selects *which commit* is built; the version reported by
+the built plugin still comes from `pom.xml`.
 
 ## Usage
 

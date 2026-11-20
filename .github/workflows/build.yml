@@ -1,0 +1,103 @@
+name: Build
+
+# Builds run only for tags, or on demand from the Actions tab.
+# Branch pushes deliberately do not trigger a build.
+# Manual runs build a specific commit SHA.
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Commit SHA to build (must already exist in the repository)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ inputs.commit || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ inputs.commit || github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve commit
+        id: ref
+        env:
+          INPUT_COMMIT: ${{ inputs.commit }}
+        run: |
+          if [ -n "$INPUT_COMMIT" ]; then
+            TARGET="$INPUT_COMMIT"
+          else
+            # Triggered by a tag push: build the commit the tag points at
+            TARGET="${GITHUB_SHA}"
+          fi
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "Building commit: $TARGET"
+
+      - name: Check out the commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.target }}
+          fetch-depth: 0
+
+      - name: Confirm the checked out commit
+        id: commit
+        env:
+          TARGET: ${{ steps.ref.outputs.target }}
+        run: |
+          HEAD_SHA="$(git rev-parse HEAD)"
+          echo "HEAD is $HEAD_SHA"
+          git describe --tags --always
+          if ! git cat-file -e "${HEAD_SHA}^{commit}"; then
+            echo "::error::$HEAD_SHA is not a commit"
+            exit 1
+          fi
+          TARGET_LC="$(printf '%s' "$TARGET" | tr '[:upper:]' '[:lower:]')"
+          case "$TARGET_LC" in
+            *[!0-9a-f]*)
+              echo "Ref '$TARGET' resolved to $HEAD_SHA"
+              ;;
+            *)
+              case "$HEAD_SHA" in
+                "$TARGET_LC"*)
+                  echo "Checked out commit matches the requested SHA"
+                  ;;
+                *)
+                  echo "::error::Requested $TARGET but checked out $HEAD_SHA"
+                  exit 1
+                  ;;
+              esac
+              ;;
+          esac
+          echo "sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "short=${HEAD_SHA:0:7}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Show build versions
+        run: |
+          echo "Commit: ${{ steps.commit.outputs.sha }}"
+          ./mvnw -B -ntp -q help:evaluate -Dexpression=project.version -DforceStdout
+          echo
+
+      # The Maven Wrapper pins Maven 3.9.9, which the Jenkins HPI plugin needs.
+      - name: Build and test
+        run: ./mvnw -B -ntp clean verify
+
+      - name: Upload plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: working-hours-${{ steps.commit.outputs.short }}
+          path: target/working-hours.hpi
+          if-no-files-found: error
